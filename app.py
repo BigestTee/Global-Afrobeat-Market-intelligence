@@ -3,6 +3,7 @@
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+import base64
 import json
 import re
 import unicodedata
@@ -18,12 +19,14 @@ import streamlit as st
 PROJECT_DIR = Path(__file__).resolve().parent
 DATA_FILE = PROJECT_DIR / "data" / "spotify_top200_cleaned.csv"
 RESEARCH_FILE = PROJECT_DIR / "Research" / "Afrobeats_Capstone_Final_Research_Workbook.xlsx"
+WELCOME_ART_FILE = PROJECT_DIR / "assets" / "welcome-studio-artist.jpg"
 NAV_ITEMS = [
     "Overview",
     "Global Market Performance",
     "Country Comparison",
     "Track & Artist Performance",
     "Afrobeats Artists & Tracks",
+    "Afrobeats Legends",
     "Growth Opportunities",
     "Data & Methodology",
 ]
@@ -69,6 +72,10 @@ st.set_page_config(
 
 
 def apply_theme():
+    welcome_image_layer = "none"
+    if WELCOME_ART_FILE.is_file():
+        image_data = base64.b64encode(WELCOME_ART_FILE.read_bytes()).decode("ascii")
+        welcome_image_layer = f"url('data:image/jpeg;base64,{image_data}')"
     st.markdown(
         f"""
         <style>
@@ -85,6 +92,42 @@ def apply_theme():
         .hero {{ position:relative; overflow:hidden; padding:clamp(1.25rem, 2.5vw, 2.15rem); border:1px solid #373047; border-top:2px solid {ACCENT_GOLD}; border-radius:22px;
           background:radial-gradient(ellipse at 84% 14%, rgba(128,79,231,.25), transparent 34%), linear-gradient(120deg,#171323 0%,#101322 54%,#0B101B 100%);
           box-shadow:0 18px 50px rgba(0,0,0,.34); margin-bottom:.8rem; }}
+        .hero-overview {{ min-height:470px; border-top-color:#A88AF5;
+          background-image:linear-gradient(90deg,rgba(5,7,16,.98) 0%,rgba(7,8,19,.91) 37%,rgba(7,8,19,.58) 62%,rgba(7,8,19,.32) 100%),linear-gradient(0deg,rgba(5,7,16,.94) 0%,transparent 48%),{welcome_image_layer},linear-gradient(120deg,#171323 0%,#101322 54%,#0B101B 100%);
+          background-position:center,center,right center,center; background-size:cover; }}
+        .hero-overview .hero-grid {{ min-height:190px; }}
+        .welcome-shell {{ max-width:1450px; margin:0 auto; }}
+        .st-key-welcome-experience {{ min-height:0; margin:0 auto 1rem; padding:clamp(.8rem,2vw,1.6rem); overflow:hidden; position:relative; isolation:isolate; border:1px solid rgba(186,160,248,.27); border-top:2px solid #A98CF5; border-radius:28px; box-shadow:0 26px 70px rgba(0,0,0,.38);
+          background-image:linear-gradient(90deg,rgba(5,7,16,.99) 0%,rgba(6,8,19,.95) 34%,rgba(6,8,19,.72) 55%,rgba(6,8,19,.28) 78%,rgba(6,8,19,.18) 100%),linear-gradient(0deg,rgba(5,7,16,.94) 0%,rgba(5,7,16,.10) 56%),{welcome_image_layer},linear-gradient(130deg,#171323 0%,#0E1421 55%,#090B14 100%);
+          background-position:center,center,right center,center; background-size:cover; }}
+        .st-key-welcome-experience > div {{ position:relative; z-index:1; }}
+        .welcome-topbar {{ display:flex; justify-content:space-between; align-items:center; gap:1rem; }}
+        .welcome-badge {{ display:inline-flex; align-items:center; gap:.5rem; padding:.45rem .72rem; border:1px solid rgba(93,216,211,.25); border-radius:999px; background:rgba(9,15,25,.62); color:#C9F4F0; font-size:.63rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; backdrop-filter:blur(12px); }}
+        .welcome-live-dot {{ width:7px; height:7px; border-radius:50%; background:#63E0CE; box-shadow:0 0 14px rgba(99,224,206,.85); }}
+        .welcome-date {{ color:#D2D0DE; font-size:.72rem; letter-spacing:.04em; white-space:nowrap; }}
+        .welcome-copy {{ max-width:650px; margin:.45rem 0 .5rem; }}
+        .welcome-kicker {{ margin-bottom:.72rem; color:#7DE1D7; font-size:.69rem; font-weight:850; letter-spacing:.2em; text-transform:uppercase; }}
+        .welcome-copy .welcome-heading {{ max-width:650px; color:#FFF; font-size:clamp(2.3rem,4.3vw,4.15rem); line-height:.91; letter-spacing:-.065em; font-weight:880; margin:0; text-wrap:balance; }}
+        .welcome-copy .welcome-heading span {{ color:#C8B4FF; text-shadow:0 0 32px rgba(159,122,255,.24); }}
+        .welcome-copy .welcome-copy-text {{ color:#E1DFEA; max-width:600px; margin:.95rem 0 0; font-size:clamp(.91rem,1.45vw,1.08rem); line-height:1.55; }}
+        .welcome-player {{ display:flex; align-items:center; gap:.8rem; width:min(550px,100%); padding:.65rem .8rem; border:1px solid rgba(203,192,232,.18); border-radius:17px; background:rgba(8,10,19,.72); box-shadow:0 12px 34px rgba(0,0,0,.28); backdrop-filter:blur(16px); }}
+        .welcome-cover-art {{ width:54px; height:54px; flex:0 0 auto; display:grid; place-items:center; overflow:hidden; position:relative; border-radius:12px; border:1px solid rgba(204,182,255,.38); background:radial-gradient(circle at 75% 20%,rgba(85,221,216,.8),transparent 30%),radial-gradient(circle at 30% 82%,rgba(180,118,255,.92),transparent 52%),linear-gradient(145deg,#251744,#0C2532); color:#FFF; font-size:.65rem; font-weight:950; letter-spacing:.1em; }}
+        .welcome-cover-art:after {{ content:''; position:absolute; width:72px; height:72px; border:1px solid rgba(255,255,255,.25); border-radius:50%; transform:translate(24px,-21px); }}
+        .welcome-player-copy {{ min-width:0; flex:1; display:flex; flex-direction:column; gap:.17rem; }}
+        .welcome-player-copy span {{ color:#79DCD5; font-size:.53rem; font-weight:850; letter-spacing:.12em; text-transform:uppercase; }}
+        .welcome-player-copy strong {{ color:#FFF; font-size:.82rem; line-height:1.2; }}
+        .welcome-player-copy small {{ color:#A9A7B8; font-size:.61rem; }}
+        .welcome-player-controls {{ display:flex; align-items:center; gap:.65rem; color:#EDE9F8; }}
+        .welcome-play-mark {{ width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(185,162,245,.35); border-radius:50%; background:rgba(138,105,216,.17); font-size:.7rem; }}
+        .welcome-player-bars {{ display:flex; align-items:center; height:26px; gap:3px; }}
+        .welcome-player-bars i {{ width:3px; height:12px; border-radius:3px; background:linear-gradient(180deg,#B397FF,#52DAD7); }}
+        .welcome-progress {{ height:2px; flex:0 0 32px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.18); }}
+        .welcome-progress span {{ display:block; width:55%; height:100%; border-radius:inherit; background:linear-gradient(90deg,#A97AFF,#4ED8D4); }}
+        .welcome-form-kicker {{ color:#7EDFD8; font-size:.63rem; font-weight:850; letter-spacing:.17em; text-transform:uppercase; }}
+        .welcome-form-title {{ margin:.35rem 0 .1rem; color:#FFF; font-size:1.12rem; font-weight:800; }}
+        .st-key-welcome-onboarding-panel {{ width:min(100%,570px); padding:1rem 1.1rem; border:1px solid rgba(181,157,235,.25); border-radius:18px; background:linear-gradient(145deg,rgba(15,15,27,.91),rgba(9,13,22,.91)); box-shadow:0 14px 40px rgba(0,0,0,.24); backdrop-filter:blur(16px); }}
+        .welcome-note {{ padding:.62rem .68rem; border-left:2px solid #54D1C8; border-radius:0 9px 9px 0; background:rgba(52,155,151,.09); color:#C6E7E4; font-size:.68rem; line-height:1.45; }}
+        .welcome-onboarding-footer {{ color:#81899D; font-size:.65rem; margin-top:.55rem; }}
         .hero-grid {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(235px, .42fr); align-items:center; gap:1.4rem; }}
         .hero-side {{ display:flex; flex-direction:column; align-items:flex-end; gap:.15rem; }}
         .hero h1 {{ color:#FFF; margin:0; font-size:clamp(1.75rem,3.3vw,3.2rem); line-height:.98; letter-spacing:-.055em; font-weight:850; }}
@@ -100,7 +143,13 @@ def apply_theme():
         .profile-name {{ color:#FFF; font-size:.72rem; font-weight:800; letter-spacing:.06em; }} .profile-date {{ color:#AAA8BA; font-size:.61rem; margin-top:.12rem; white-space:nowrap; }}
         .hero-compact-title {{ color:#FFF; margin:0; font-size:clamp(1.5rem,2.7vw,2.4rem); line-height:1.02; letter-spacing:-.05em; font-weight:850; }}
         .waveform {{ height:82px; display:flex; align-items:center; justify-content:center; gap:5px; opacity:.9; }}
-        .waveform span {{ display:block; width:5px; border-radius:8px; background:linear-gradient(180deg,#A78BFA,#48D7DE); box-shadow:0 0 14px rgba(121,104,243,.4); }}
+        .waveform span {{ display:block; width:5px; border-radius:8px; background:linear-gradient(180deg,#A78BFA,#48D7DE); box-shadow:0 0 14px rgba(121,104,243,.4); transform-origin:center; animation:equalizerPulse 1.25s ease-in-out infinite; }}
+        .equalizer i, .welcome-player-bars i {{ transform-origin:center; animation:equalizerPulse 1.18s ease-in-out infinite; }}
+        .waveform span:nth-child(4n+1), .equalizer i:nth-child(4n+1), .welcome-player-bars i:nth-child(4n+1) {{ animation-duration:1.05s; }}
+        .waveform span:nth-child(4n+2), .equalizer i:nth-child(4n+2), .welcome-player-bars i:nth-child(4n+2) {{ animation-duration:1.38s; animation-delay:-.35s; }}
+        .waveform span:nth-child(4n+3), .equalizer i:nth-child(4n+3), .welcome-player-bars i:nth-child(4n+3) {{ animation-duration:1.58s; animation-delay:-.62s; }}
+        .waveform span:nth-child(4n), .equalizer i:nth-child(4n), .welcome-player-bars i:nth-child(4n) {{ animation-duration:1.22s; animation-delay:-.22s; }}
+        @keyframes equalizerPulse {{ 0%,100% {{ transform:scaleY(.5); opacity:.72; }} 50% {{ transform:scaleY(1.28); opacity:1; }} }}
         .hero-metrics {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; margin-top:1.2rem; }}
         .hero-metric {{ padding:.68rem .8rem; border:1px solid rgba(180,168,215,.14); border-radius:12px; background:rgba(7,9,16,.45); min-width:0; }}
         .hero-metric-label {{ color:#A7A4B3; font-size:.59rem; text-transform:uppercase; letter-spacing:.12em; font-weight:750; }}
@@ -170,8 +219,9 @@ def apply_theme():
         .nav-note {{ color:#77768A; font-size:.63rem; letter-spacing:.12em; font-weight:800; text-transform:uppercase; margin:.75rem 0 .15rem; }}
         .section-note {{ color:#A2A2B2; font-size:.86rem; line-height:1.5; }} hr {{ border-color:#292637; margin:.75rem 0; }}
         [data-testid="stExpander"] {{ border-color:#302D3E; border-radius:12px; background:rgba(17,16,26,.65); }}
-        @media (max-width:850px) {{ .hero-grid {{ grid-template-columns:1fr; }} .waveform {{ display:none; }} .hero-metrics {{ grid-template-columns:repeat(3,minmax(0,1fr)); }} }}
-        @media (max-width:600px) {{ .block-container {{ padding-top:.8rem; }} .hero {{ border-radius:16px; }} .hero-metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .hero-context span {{ flex:1 1 42%; }} }}
+        @media (max-width:850px) {{ .hero-grid {{ grid-template-columns:1fr; }} .waveform {{ display:none; }} .hero-metrics {{ grid-template-columns:repeat(3,minmax(0,1fr)); }} .st-key-welcome-experience {{ min-height:0; background-position:center,center,66% center,center; }} .welcome-copy {{ margin:.75rem 0; }} }}
+        @media (max-width:600px) {{ .block-container {{ padding-top:.8rem; }} .hero {{ border-radius:16px; }} .hero-metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .hero-context span {{ flex:1 1 42%; }} .st-key-welcome-experience {{ min-height:0; padding:1rem; border-radius:19px; background-position:center,center,72% center,center; }} .welcome-topbar {{ align-items:flex-start; flex-direction:column; }} .welcome-date {{ font-size:.66rem; }} .welcome-copy .welcome-heading {{ font-size:clamp(2rem,9vw,3.1rem); }} .welcome-player {{ gap:.55rem; padding:.55rem; }} .welcome-cover-art {{ width:44px; height:44px; }} .welcome-player-copy small {{ font-size:.55rem; }} .welcome-player-controls {{ gap:.4rem; }} .welcome-player-bars {{ display:none; }} .welcome-progress {{ flex-basis:22px; }} .st-key-welcome-onboarding-panel {{ padding:.85rem; }} }}
+        @media (prefers-reduced-motion: reduce) {{ .waveform span, .equalizer i, .welcome-player-bars i {{ animation:none !important; transform:none !important; }} .track-tile {{ transition:none !important; }} }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -661,10 +711,11 @@ def show_header(section, date_range=None, selected_markets=None, market_options=
         metrics_section = ""
         metrics_note = ""
     profile_name = escape(display_name) if display_name else "NAME NOT SET"
+    hero_class = "hero hero-overview" if is_overview else "hero"
     waveform_bars = [21, 43, 29, 62, 40, 76, 52, 35, 68, 44, 82, 51, 31, 61, 39, 72, 46, 27, 55, 36, 66, 43, 24]
     waveform = "".join(f'<span style="height:{height}px"></span>' for height in waveform_bars)
     st.markdown(
-        f'<div class="hero"><div class="hero-grid"><div><div class="hero-status"><i class="hero-status-dot"></i>{status}</div>'
+        f'<div class="{hero_class}"><div class="hero-grid"><div><div class="hero-status"><i class="hero-status-dot"></i>{status}</div>'
         f'{hero_copy}</div><div class="hero-side"><div class="waveform" aria-hidden="true">{waveform}</div>'
         f'<div class="profile-panel"><div class="profile-avatar">{escape(name_initials)}</div><div><div class="profile-name">{profile_name}</div><div class="profile-date">{escape(today)}</div></div></div></div></div>'
         f'{metrics_section}'
@@ -1166,11 +1217,6 @@ def render_afrobeats(matches, observations):
         "Artists and tracks in the Afrobeats catalogue",
         "Browse confirmed song–artist matches, their country-chart presence, and credited artist activity. No biographies or audience measures are inferred.",
     )
-    st.markdown(
-        '<div class="notice"><strong>Research status:</strong> 57 normalized song–artist combinations are matched to the Official UK Afrobeats Chart. '
-        'This is a UK genre-chart signal, not an independent or universal classification, and the catalogue is not complete or representative.</div>',
-        unsafe_allow_html=True,
-    )
     artist_names = {artist for values in matches["artists"].apply(split_artists) for artist in values}
     render_kpi_grid([
         ("Validated song–artist pairs", f"{len(matches):,}", "Full workbook · confirmed chart matches", "♫"),
@@ -1343,11 +1389,6 @@ def render_opportunities(observations, early_latest, shortlist, matches, selecte
         "PRELIMINARY SCREEN / WORKBOOK PRIORITIES",
         "Growth opportunities",
         "Workbook-ranked international markets are presented alongside a separate Nigeria domestic benchmark and a separate GLOBAL chart line.",
-    )
-    st.warning(
-        "PRELIMINARY MARKET SCREEN: The workbook covers 57 song–artist combinations matched to the Official UK Afrobeats Chart. "
-        "Its shortlist supports research prioritization only; it is not a representative genre catalogue or validated market-size ranking. "
-        "Chart visibility does not equal total listening demand, revenue, profitability, audience size, or market size."
     )
 
     selected_shortlist = shortlist.loc[shortlist["Market"].isin(selected_markets)].sort_values("Priority").copy()
@@ -1558,6 +1599,54 @@ def render_methodology(data, matches, research_observations):
     st.caption("Source references for the Official UK Afrobeats Chart and IFPI industry context are listed on the workbook’s Sources & Method sheet. IFPI figures describe the recorded-music industry overall, not Afrobeats-only revenue.")
 
 
+AFROBEATS_LEGENDS = [{'name': 'Fela Kuti', 'role': 'Foundational influence · Afrobeat', 'image': 'fela-kuti.jpg', 'photo_author': 'MOI MEME', 'photo_alt': 'Fela Kuti seated with a companion, circa 1970', 'photo_license': 'CC BY-SA 3.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:WA%C3%8FPA_FELA_KUTI.JPG', 'license_url': 'https://creativecommons.org/licenses/by-sa/3.0/', 'bio': 'Nigerian composer, bandleader and activist Fela Anikulapo-Kuti developed Afrobeat through a fusion of highlife, jazz, soul and West African rhythms, with politically engaged lyrics.', 'milestones': ['Formed Koola Lobitos while studying music in London in 1961.', 'Pioneered Afrobeat in the early 1970s and built a lasting musical and political legacy.'], 'music': 'Zombie · Expensive Shit · Gentleman', 'recognition': 'Received the Recording Academy’s posthumous Lifetime Achievement Award in 2026.', 'editorial': 'Fela’s Afrobeat (singular) is a foundational influence on modern Afrobeats (plural). He is not categorized as a modern Afrobeats recording artist here or in the capstone’s track sample.', 'sources': [['Fela Kuti official biography', 'https://felakuti.com/gb/about'], ['Rock & Roll Hall of Fame profile', 'https://rockhall.com/inductees/fela-kuti/'], ['AP: Afrobeat distinction and 2026 award', 'https://apnews.com/article/8f55a53a7538b7006ec9752d0f969750'], ['Recording Academy album guide', 'https://www.grammy.com/news/fela-kuti-musical-family-femi-seun-yeni-made-guide/']]}, {'name': 'D’banj', 'role': 'Early international crossover', 'image': 'dbanj.jpg', 'photo_author': 'Tobennandu', 'photo_license': 'CC BY-SA 3.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:D%27banjawards.jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/3.0/', 'bio': 'Nigerian singer and entertainer D’banj began recording with producer Don Jazzy and emerged with the 2005 debut album No Long Thing.', 'milestones': ['“Oliver Twist” peaked at No. 9 on the UK Official Singles Chart in 2012.', 'Won the MOBO Award for Best African Act in 2012.'], 'music': 'No Long Thing · The Entertainer · “Oliver Twist”', 'recognition': 'UK chart success and the MOBO award document an early crossover moment for a Nigerian pop release.', 'editorial': 'His UK chart entry helped make Nigerian pop more visible to British chart audiences during an early period of Afrobeats’ international expansion.', 'sources': [['Apple Music artist biography', 'https://music.apple.com/us/artist/dbanj/119240106'], ['Official Charts: Oliver Twist', 'https://www.officialcharts.com/songs/dbanj-oliver-twist/'], ['MOBO Awards 2012', 'https://www.mobo.com/history/2012']]}, {'name': 'Fuse ODG', 'role': 'UK and Ghanaian influence', 'image': 'fuse-odg.jpg', 'photo_author': 'Ameyaw Debrah', 'photo_license': 'CC BY-SA 3.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:Fuse_ODG.jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/3.0/', 'bio': 'British-Ghanaian artist Nana Richard Abiona, known as Fuse ODG, connected his South London and Ghanaian experiences through contemporary Afrobeats and Azonto-influenced pop.', 'milestones': ['“Antenna” peaked at No. 7 and “Million Pound Girl (Badder Than Bad)” at No. 5 on the UK Official Singles Chart.', 'Won MOBO Best African Act in 2013.'], 'music': '“Azonto” · “Antenna” · T.I.N.A.', 'recognition': 'UK chart success, a MOBO award and coverage of his Azonto work document his role in bringing Ghanaian dance and sound into UK pop conversation.', 'editorial': 'His UK–Ghanaian positioning illustrates how diaspora artists helped make Afrobeats more familiar to audiences in Britain.', 'sources': [['The Guardian profile', 'https://www.theguardian.com/music/2014/jan/31/fuse-odg-afrobeats-ghana-azonto'], ['Official Charts: Fuse ODG', 'https://www.officialcharts.com/artist/26103/fuse-odg/'], ['MOBO Awards 2013', 'https://www.mobo.com/history/2013']]}, {'name': 'Wizkid', 'role': 'Global Afrobeats breakthrough', 'image': 'wizkid.jpg', 'photo_author': 'Muhammed Amine Benloulou', 'photo_license': 'CC BY-SA 4.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:Wizkid_in_Canex_-_Algiers_2025_(cropped).jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/4.0/', 'bio': 'Nigerian singer and songwriter Wizkid broke through with “Holla at Your Boy” and Superstar, later expanding his international profile with Made in Lagos.', 'milestones': ['“Essence,” featuring Tems, received a 2022 Grammy nomination for Best Global Music Performance.', 'Wizkid shared the 2021 Grammy win for Best Music Video for “Brown Skin Girl,” alongside Beyoncé and Blue Ivy Carter.'], 'music': 'Superstar · Made in Lagos · “Essence”', 'recognition': 'The Recording Academy records one win and nominations including “Essence” and Made in Lagos: Deluxe Edition.', 'editorial': '“Essence” brought a Nigerian Afrobeats collaboration into sustained US mainstream radio and wider international conversation.', 'sources': [['Recording Academy artist profile', 'https://www.grammy.com/artists/wizkid/20080/'], ['Recording Academy: Essence', 'https://www.grammy.com/songs/essence-3/'], ['Recording Academy feature on Made in Lagos', 'https://www.grammy.com/news/wizkid-made-in-lagos-essence-for-the-record-justin-bieber-remix-her-video-afrobeats-nigeria/']]}, {'name': 'Burna Boy', 'role': 'International recognition', 'image': 'burna-boy.jpg', 'photo_author': 'Ameyaw Debrah', 'photo_license': 'CC BY-SA 3.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:Burna_Boy.jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/3.0/', 'bio': 'Nigerian singer and songwriter Burna Boy combines Afrobeats with dancehall, reggae, hip-hop and R&B influences. His albums include African Giant, Twice as Tall and I Told Them….', 'milestones': ['Twice as Tall won the 2021 Grammy for Best Global Music Album.', 'His recordings have received repeated Recording Academy recognition across global and African music categories.'], 'music': 'African Giant · Twice as Tall · “Ye”', 'recognition': 'The 2021 Grammy win for Twice as Tall marked a documented moment of international recognition for contemporary African popular music.', 'editorial': 'His genre-spanning catalogue and award recognition have helped bring modern Afrobeats into global music-industry discussion.', 'sources': [['Recording Academy artist profile', 'https://www.grammy.com/artists/burna-boy/251682/'], ['Recording Academy: Twice as Tall wins', 'https://www.grammy.com/news/burna-boy-wins-best-global-music-album-twice-tall-2021-grammy-awards-show']]}, {'name': 'Tiwa Savage', 'role': 'Women’s influence and international growth', 'image': 'tiwa-savage.jpg', 'photo_author': 'TCD Photography', 'photo_license': 'CC BY-SA 3.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:Tiwa_Savage%27s_studio_portrait.jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/3.0/', 'bio': 'Lagos-born singer-songwriter Tiwa Savage studied professional music at Berklee College of Music before building a career as a performer and songwriter.', 'milestones': ['Became the first woman to win MTV Europe’s Best African Act in 2018.', 'Signed a global recording agreement with Universal Music Group in 2019 for international release through UMG operations in more than 60 countries.'], 'music': '“Mr Lova Lova” · “Tiwa’s Vibe” · Celia', 'recognition': 'UMG documented her 2018 MTV EMA award and international recording agreement; she also performed at Global Citizen Festival in Johannesburg.', 'editorial': 'Her songwriting and international partnerships offer a visible example of women shaping Afrobeats’ cross-border presence.', 'sources': [['Universal Music Group announcement', 'https://www.universalmusic.com/tiwa-savage-signs-exclusive-international-agreement-with-universal-music-group/'], ['Kent honorary graduate biography', 'https://static.kent.ac.uk/media/news/2022/07/Biographies-for-Kent-Honorary-Graduands-July-2022-FINAL.pdf'], ['Apple Music: Celia', 'https://music.apple.com/us/album/celia/1527579384']]}, {'name': 'Davido', 'role': 'Global commercial reach', 'image': 'davido.jpg', 'photo_author': 'OLAMIPOSI DANIEL', 'photo_license': 'CC BY-SA 4.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:Davido_2024_(cropped).jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/4.0/', 'bio': 'Nigerian-American singer, songwriter and producer Davido released his debut album Omo Baba Olowo in 2012 and built an international career through recordings and collaborations.', 'milestones': ['Timeless received a 2024 Grammy nomination for Best Global Music Album.', '“FEEL” and “UNAVAILABLE” were also nominated in Grammy performance categories in 2024.'], 'music': 'Omo Baba Olowo · Timeless · “UNAVAILABLE”', 'recognition': 'The 2024 nominations marked Davido’s first Grammy nominations and included the Academy’s inaugural Best African Music Performance category.', 'editorial': 'His cross-border collaborations and category recognition reflect growing international visibility for Nigerian popular music.', 'sources': [['Recording Academy interview', 'https://www.grammy.com/news/davido-timeless-interview-2024-grammys-meet-first-time-nominee/'], ['Recording Academy: Timeless', 'https://www.grammy.com/albums/timeless/']]}, {'name': 'Tems', 'role': 'New-generation global recognition', 'image': 'tems.jpg', 'photo_author': 'Patrick Cristiano', 'photo_license': 'CC BY-SA 4.0', 'photo_source': 'https://commons.wikimedia.org/wiki/File:Tems_in_2025.jpg', 'license_url': 'https://creativecommons.org/licenses/by-sa/4.0/', 'bio': 'Nigerian singer-songwriter Tems has reached international audiences through solo releases and collaborations, including “Essence” with Wizkid and “Wait For U” with Future and Drake.', 'milestones': ['Won the 2025 Grammy for Best African Music Performance with “Love Me JeJe.”', 'Born in the Wild received a 2025 Grammy nomination for Best Global Music Album.'], 'music': 'Born in the Wild · “Love Me JeJe” · “Essence”', 'recognition': 'The Recording Academy lists the 2025 Best African Music Performance win for “Love Me JeJe” and additional nominations.', 'editorial': 'Tems’ solo work and high-profile collaborations represent a newer generation of Nigerian artists participating in international music conversations.', 'sources': [['Recording Academy artist profile', 'https://www.grammy.com/artists/tems/38505/'], ['Recording Academy: Love Me JeJe', 'https://www.grammy.com/songs/love-me-jeje/'], ['2025 Best African Music Performance', 'https://www.grammy.com/awards/categories/best-african-music-performance/2025/']]}]
+
+def render_afrobeats_legends():
+    section_heading(
+        "MUSIC CATALOGUE / EDITORIAL",
+        "Afrobeats Legends",
+        "An editorial guide to artists whose work helped shape the sound, reach and international recognition of Afrobeats.",
+    )
+    st.caption(
+        "Curated profiles, not a statistical ranking. Career milestones and awards are documented in linked sources; contribution notes are editorial context. This section is separate from workbook-based chart analysis."
+    )
+    st.info(
+        "Genre distinction: Fela Kuti pioneered Afrobeat (singular), a foundational influence on modern Afrobeats (plural). His legacy is historical context, not a modern Afrobeats track classification."
+    )
+
+    for row in range(0, len(AFROBEATS_LEGENDS), 2):
+        left, right = st.columns(2, gap="medium")
+        for column, artist in zip((left, right), AFROBEATS_LEGENDS[row:row + 2]):
+            with column:
+                with st.container(border=True):
+                    image_column, details = st.columns([0.82, 1.7], gap="medium", vertical_alignment="top")
+                    with image_column:
+                        photo_path = PROJECT_DIR / "assets" / "afrobeats_legends" / artist["image"]
+                        if photo_path.is_file():
+                            st.image(str(photo_path), alt=artist.get("photo_alt", f"{artist['name']} portrait"), width="stretch")
+                        else:
+                            st.info("Portrait unavailable")
+                        st.markdown(
+                            f"Photo: [{artist['photo_author']}]({artist['photo_source']}) · "
+                            f"[{artist['photo_license']}]({artist['license_url']})"
+                        )
+                    with details:
+                        st.markdown(f"### {artist['name']}")
+                        st.caption(artist["role"])
+                        st.write(artist["bio"])
+                        st.markdown("**Documented milestones**")
+                        for milestone in artist["milestones"]:
+                            st.markdown(f"- {milestone}")
+                        st.markdown(f"**Notable music** · {artist['music']}")
+                        st.markdown(f"**Verified recognition** · {artist['recognition']}")
+                        st.markdown(f"**Editorial context** · {artist['editorial']}")
+                        linked_sources = " · ".join(
+                            f"[{label}]({url})" for label, url in artist["sources"]
+                        )
+                        st.markdown(f"**Research sources:** {linked_sources}")
+
+
+
 def activate_navigation(section):
     st.session_state["active_section"] = section
 
@@ -1577,7 +1666,7 @@ def render_sidebar_navigation():
     groups = [
         ("Overview", [("Overview", "◈")]),
         ("Markets", [("Global Market Performance", "◉"), ("Country Comparison", "▦")]),
-        ("Music catalogue", [("Track & Artist Performance", "♫"), ("Afrobeats Artists & Tracks", "♪")]),
+        ("Music catalogue", [("Track & Artist Performance", "♫"), ("Afrobeats Artists & Tracks", "♪"), ("Afrobeats Legends", "♛")]),
         ("Research", [("Growth Opportunities", "✦"), ("Data & Methodology", "ⓘ")]),
     ]
     for group, destinations in groups:
@@ -1614,27 +1703,39 @@ def main():
     apply_theme()
     st.session_state.setdefault("display_name", "")
     if not str(st.session_state.get("display_name", "")).strip():
-        st.markdown(
-            '<div class="hero"><div class="eyebrow">GLOBAL AFROBEATS MARKET INTELLIGENCE · PERSONAL SESSION</div>'
-            '<h1 class="welcome-heading">Welcome to your<br><span>music intelligence workspace</span></h1>'
-            '<p>Explore validated chart visibility for Afrobeats across international Spotify markets. '
-            'Choose a display name to begin; this is not an account or authentication system.</p></div>',
-            unsafe_allow_html=True,
-        )
-        with st.container(border=True):
-            st.subheader("Personalize your session")
-            st.caption("Your display name is kept in Streamlit session state for this active session only.")
-            with st.form("display-name-onboarding"):
-                display_name_input = st.text_input("Display name", placeholder="For example, Teeyana", max_chars=48)
-                submitted = st.form_submit_button("Continue to the dashboard", type="primary")
-            if submitted:
-                cleaned_name = " ".join(str(display_name_input or "").split()).title()
-                if cleaned_name:
-                    st.session_state["display_name"] = cleaned_name
-                    st.session_state["display_name_editor"] = cleaned_name
-                    st.rerun()
-                else:
-                    st.warning("Enter a display name to continue.")
+        welcome_today = datetime.now().astimezone().strftime("%A, %B %d, %Y")
+        with st.container(key="welcome-experience"):
+            st.markdown(
+                '<div class="welcome-topbar"><span class="welcome-badge"><i class="welcome-live-dot"></i> GLOBAL AFROBEATS · CHART INTELLIGENCE</span>'
+                f'<span class="welcome-date">{escape(welcome_today)}</span></div>'
+                '<div class="welcome-copy"><div class="welcome-kicker">YOUR MUSIC INTELLIGENCE WORKSPACE</div>'
+                '<h1 class="welcome-heading">Welcome to your<br><span>Afrobeats world.</span></h1>'
+                '<p class="welcome-copy-text">Step into a focused view of Afrobeats chart visibility, with validated UK chart matches across international Spotify markets.</p></div>',
+                unsafe_allow_html=True,
+            )
+            with st.container(key="welcome-onboarding-panel"):
+                st.markdown('<div class="welcome-form-kicker">PERSONALISE YOUR SESSION</div><div class="welcome-form-title">What should we call you?</div>', unsafe_allow_html=True)
+                st.caption("Display name only · session-scoped · no account or authentication.")
+                with st.form("display-name-onboarding", border=False):
+                    display_name_input = st.text_input("Display name", placeholder="Enter your name", max_chars=48)
+                    submitted = st.form_submit_button("Continue to the dashboard", type="primary", width="stretch")
+                if submitted:
+                    cleaned_name = " ".join(str(display_name_input or "").split()).title()
+                    if cleaned_name:
+                        st.session_state["display_name"] = cleaned_name
+                        st.session_state["display_name_editor"] = cleaned_name
+                        st.rerun()
+                    else:
+                        st.warning("Enter a display name to continue.")
+                st.markdown('<div class="welcome-note">Spotify chart appearances show visibility in this research sample; they are not total listeners, revenue, or market size.</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="welcome-player" aria-label="Decorative music player visual; no audio playback">'
+                '<div class="welcome-cover-art" aria-hidden="true">GAMI</div>'
+                '<div class="welcome-player-copy"><span>RESEARCH MIX · VISUAL ONLY</span><strong>Global Afrobeats Radar</strong><small>Validated chart presence · no audio playback</small></div>'
+                '<div class="welcome-player-controls" aria-hidden="true"><span class="welcome-play-mark">▶</span><span class="welcome-player-bars"><i style="height:8px"></i><i style="height:16px"></i><i style="height:11px"></i><i style="height:20px"></i><i style="height:13px"></i></span><span class="welcome-progress"><span></span></span></div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
         st.stop()
 
     section = render_sidebar_navigation()
@@ -1700,6 +1801,8 @@ def main():
             render_tracks(filtered)
     elif section == "Afrobeats Artists & Tracks":
         render_afrobeats(matches, filtered_research)
+    elif section == "Afrobeats Legends":
+        render_afrobeats_legends()
     elif section == "Growth Opportunities":
         render_opportunities(filtered_research, early_latest, shortlist, matches, selected_markets)
     else:
