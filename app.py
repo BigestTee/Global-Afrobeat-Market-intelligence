@@ -641,7 +641,7 @@ def show_header(section, date_range=None, selected_markets=None, market_options=
     )
     if is_overview:
         if display_name:
-            welcome_title = f'<h1 class="welcome-heading">Welcome back,<br><span>{escape(display_name)}</span></h1>'
+            welcome_title = f'<h1 class="welcome-heading">Welcome,<br><span>{escape(display_name)}</span></h1>'
         else:
             welcome_title = '<h1 class="welcome-heading">Your music<br><span>intelligence workspace</span></h1>'
         hero_copy = (
