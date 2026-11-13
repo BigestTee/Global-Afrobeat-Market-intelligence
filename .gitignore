@@ -1,0 +1,33 @@
+# Python bytecode and cache directories
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment and Streamlit secrets
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Logs and temporary/editor files
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local development copies and timestamped app backups
+/app.py.backup-*
+/app_redesign_test.py
+
+# Legacy and duplicate materials kept locally
+/Archive/
