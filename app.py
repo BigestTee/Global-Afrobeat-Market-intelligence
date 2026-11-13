@@ -1705,6 +1705,7 @@ def main():
     else:
         render_methodology(data, matches, full_research_observations)
     st.caption("GLOBAL AFROBEATS MARKET INTELLIGENCE · Workbook-validated UK chart matches · Chart visibility is not total listening or market size")
+    st.caption("Created by Christiana Thomas Elumelu · GenData Data Analytics Capstone Project · 2026")
 
 
 if __name__ == "__main__":

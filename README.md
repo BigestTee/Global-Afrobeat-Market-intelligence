@@ -143,4 +143,8 @@ The Python dependencies are listed in `requirements.txt`; artwork lookup uses Py
 
 ## Author / Project Context
 
-This is an academic capstone project in music-industry market intelligence. It combines prepared chart data, documented matching decisions and published industry context to develop a cautious, reproducible starting point for further research into international opportunities for emerging Afrobeats artists.
+- **Author:** Christiana Thomas Elumelu
+- **Project:** Global Afrobeats Market Intelligence: Identifying International Growth Opportunities for Emerging Afrobeats Artists.
+- **Programme:** GenData Data Analytics Programme
+- **Project Type:** Final Capstone Project
+- **Year:** 2026
