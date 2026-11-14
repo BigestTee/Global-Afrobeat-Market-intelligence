@@ -15,6 +15,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from zoneinfo import ZoneInfo
+
 
 PROJECT_DIR = Path(__file__).resolve().parent
 DATA_FILE = PROJECT_DIR / "data" / "spotify_top200_cleaned.csv"
@@ -1623,7 +1625,7 @@ def render_afrobeats_legends():
                     with image_column:
                         photo_path = PROJECT_DIR / "assets" / "afrobeats_legends" / artist["image"]
                         if photo_path.is_file():
-                            st.image(str(photo_path), alt=artist.get("photo_alt", f"{artist['name']} portrait"), width="stretch")
+                           st.image(str(photo_path), alt=artist.get("photo_alt", f"{artist['name']} portrait"), width="stretch")
                         else:
                             st.info("Portrait unavailable")
                         st.markdown(
@@ -1703,7 +1705,7 @@ def main():
     apply_theme()
     st.session_state.setdefault("display_name", "")
     if not str(st.session_state.get("display_name", "")).strip():
-        welcome_today = datetime.now().astimezone().strftime("%A, %B %d, %Y")
+        welcome_today = datetime.now(ZoneInfo("Africa/Nairobi")).strftime("%A, %B %d, %Y")
         with st.container(key="welcome-experience"):
             st.markdown(
                 '<div class="welcome-topbar"><span class="welcome-badge"><i class="welcome-live-dot"></i> GLOBAL AFROBEATS · CHART INTELLIGENCE</span>'
